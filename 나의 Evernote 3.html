@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>나의 Evernote</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  .header {
+    background-color: #3f8cb5;
+    color: #fff;
+    padding: 10px 20px;
+    text-align: center;
+  }
+  .note-list {
+    margin: 0;
+    padding: 0;
+  }
+  .note-list li {
+    list-style: none;
+    border-bottom: 1px solid #eee;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .note-list li:hover {
+    background-color: #f4f4f4;
+  }
+  .note-content {
+    padding: 20px;
+    min-height: 150px;
+    border-top: 1px solid #eee;
+  }
+  #addNoteForm {
+    margin: 20px;
+    display: flex;
+    justify-content: space-between;
+  }
+  #addNoteForm input[type="text"] {
+    flex: 1;
+    padding: 10px;
+    margin-right: 10px;
+  }
+  #addNoteForm button {
+    padding: 10px 20px;
+  }
+  .note-delete-button {
+    display: none;
+  }
+  .note-list li:hover .note-delete-button {
+    display: block;
+  }
+  .note-delete-button {
+    color: red;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>나의 Evernote</h1>
+</div>
+
+<form id="addNoteForm">
+  <input type="text" id="newNoteTitle" placeholder="노트 제목 입력" required>
+  <input type="text" id="newNoteContent" placeholder="노트 내용 입력" required>
+  <button type="submit">노트 추가</button>
+</form>
+
+<ul class="note-list" id="noteList">
+  <!-- 사용자가 추가한 노트가 여기에 표시됩니다. -->
+</ul>
+
+<div class="note-content" id="noteContent">
+  <h2>노트 제목을 선택하면 여기에 표시됩니다.</h2>
+  <p>노트 내용을 선택하면 여기에 표시됩니다.</p>
+</div>
+
+<script>
+// 노트 목록을 저장하고 불러오는 함수들
+function saveNotes(notes) {
+  localStorage.setItem('notes', JSON.stringify(notes));
+}
+
+function loadNotes() {
+  var notes = localStorage.getItem('notes');
+  return notes ? JSON.parse(notes) : [];
+}
+
+// 노트 목록을 화면에 표시하는 함수
+function displayNotes() {
+  var notes = loadNotes();
+  var noteList = document.getElementById('noteList');
+  noteList.innerHTML = ''; // 목록 초기화
+  notes.forEach(function(note) {
+    var noteElement = document.createElement('li');
+    noteElement.textContent = note.title;
+    noteElement.setAttribute('data-content', note.content);
+
+    noteElement.addEventListener('click', function(event) {
+      document.getElementById('noteContent').innerHTML = 
+        `<h2>${note.title}</h2><p>${note.content}</p>`;
+    });
+
+    var deleteButton = document.createElement('span');
+    deleteButton.classList.add('note-delete-button');
+    deleteButton.textContent = '삭제';
+    deleteButton.addEventListener('click', function(event) {
+      event.stopPropagation();
+      var confirmed = confirm('정말로 이 노트를 삭제하시겠습니까?');
+      if (confirmed) {
+        var notes = loadNotes();
+        notes = notes.filter(function(n) {
+          return n.title !== note.title && n.content !== note.content;
+        });
+        saveNotes(notes);
+        displayNotes(); // 목록 갱신
+        document.getElementById('noteContent').innerHTML = 
+          '<h2>노트 제목을 선택하면 여기에 표시됩니다.</h2><p>노트 내용을 선택하면 여기에 표시됩니다.</p>';
+      }
+    });
+
+    noteElement.appendChild(deleteButton);
+    noteList.appendChild(noteElement);
+  });
+}
+
+// 폼 제출 처리
+document.getElementById('addNoteForm').onsubmit = function(event) {
+  event.preventDefault();
+  var newNoteTitle = document.getElementById('newNoteTitle').value.trim();
+  var newNoteContent = document.getElementById('newNoteContent').value.trim();
+
+  if(newNoteTitle && newNoteContent) {
+    var notes = loadNotes();
+    notes.push({ title: newNoteTitle, content: newNoteContent });
+    saveNotes(notes);
+    displayNotes(); // 목록 갱신
+    document.getElementById('newNoteTitle').value = '';
+    document.getElementById('newNoteContent').value = '';
+  } else {
+    alert('노트 제목과 내용을 입력해주세요.');
+  }
+};
+
+// 페이지 로드 시 노트 목록 불러오기
+window.onload = function() {
+  displayNotes();
+};
+
+</script>
+
+</body>
+</html>
